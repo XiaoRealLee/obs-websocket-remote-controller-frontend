@@ -14,18 +14,32 @@
         </el-collapse-item>
         <el-collapse-item title="状态指示器" name="2">
             <div>
-                <audio v-show="false" controls ref="beepAudioPlayer" class="aud">
-                    <source src="../assets/audio/beep.mp3"/>
+                <audio v-show="false" controls ref="playingAudioPlayer" class="aud">
+                    <source src="../assets/audio/beep.mp3" />
                 </audio>
                 <audio v-show="false" controls ref="messengerAudioPlayer" class="aud">
-                    <source src="../assets/audio/messenger.mp3"/>
+                    <source src="../assets/audio/messenger.mp3" />
                 </audio>
                 <audio v-show="false" controls ref="completedAudioPlayer" class="aud">
-                    <source src="../assets/audio/completed.mp3"/>
+                    <source src="../assets/audio/completed.mp3" />
                 </audio>
-                <!-- <el-button @click="playBeepAudio()">beep音频</el-button>
-                <el-button @click="playMessengerAudio()">Messenger音频</el-button>
-                <el-button @click="playCompletedAudio()">Completed音频</el-button> -->
+                <audio v-show="false" controls ref="changeToPlayAudioPlayer" class="aud">
+                    <source src="../assets/audio/切换播放1次.mp3" />
+                </audio>
+                <audio v-show="false" controls ref="previewAudioPlayer" class="aud">
+                    <source src="../assets/audio/预览中2秒一次.mp3" />
+                </audio>
+                <!-- <el-button @click="playPlayingAudio()">playing音频</el-button>
+                <el-button @click="playChangeToPreviewAudio()">changeToPreview音频</el-button>
+                <el-button @click="playCompletedAudio()">Completed音频</el-button>
+                <el-button @click="playChangeToPlayAudio()">ChangeToiPlayAudio音频</el-button>
+                <el-button @click="playPreviewAudio()">Preview音频</el-button>
+
+                <el-button @click="stopPlayingPlayingAudio()">playing音频</el-button>
+                <el-button @click="stopPlayingChangeToPreviewAudio()">changeToPreview音频</el-button>
+                <el-button @click="stopPlayingCompletedAudio()">Completed音频</el-button>
+                <el-button @click="stopPlayingChangeToPlayAudio()">ChangeToPlay音频</el-button>
+                <el-button @click="stopPlayingPreviewAudio()">Preview音频</el-button> -->
                 <div v-show="isShowText">
                     <el-text>说明：</el-text>
                     <el-text>当左侧亮起时，表明您的OBS画面正在被预览。</el-text>
@@ -85,6 +99,8 @@ export default {
     },
     data() {
         return {
+            playingTimer: null,
+            previewingTimer: null,
             isActiveCloseWebsocketConnection: false,
             isHideText: false,
             activeNames: ref(['1']),
@@ -106,12 +122,57 @@ export default {
         }
     },
     methods: {
-        playBeepAudio() {
-            this.$refs.beepAudioPlayer.play()
-        },playMessengerAudio() {
+        playPlayingAudio() {
+            if(this.playingTimer!=null){
+                return
+            }
+            let that = this
+            this.playingTimer = setInterval(function () {
+
+                that.$refs.playingAudioPlayer.load()
+                that.$refs.playingAudioPlayer.play()
+            }, 2000)
+            // this.$refs.playingAudioPlayer.play()
+        }, playChangeToPreviewAudio() {
+            this.$refs.messengerAudioPlayer.load()
             this.$refs.messengerAudioPlayer.play()
-        },playCompletedAudio() {
+        }, playCompletedAudio() {
+            this.$refs.completedAudioPlayer.load()
             this.$refs.completedAudioPlayer.play()
+        }, playChangeToPlayAudio() {
+            this.$refs.changeToPlayAudioPlayer.load()
+            this.$refs.changeToPlayAudioPlayer.play()
+        }, playPreviewAudio() {
+            if (this.previewingTimer!=null){
+                return;
+            }
+            let that = this
+            this.previewingTimer = setInterval(function () {
+                that.$refs.previewAudioPlayer.load()
+                that.$refs.previewAudioPlayer.play()
+            }, 2000)
+        }, stopPlayingPlayingAudio() {
+            let that = this
+            if (that.playingTimer != null) {
+                clearInterval(that.playingTimer);
+                that.playingTimer = null;
+            }
+
+            this.$refs.playingAudioPlayer.pause();
+        }, stopPlayingChangeToPreviewAudio() {
+            this.$refs.messengerAudioPlayer.pause()
+        }, stopPlayingCompletedAudio() {
+            this.$refs.completedAudioPlayer.pause()
+        }, stopPlayingChangeToPlayAudio() {
+            this.$refs.changeToPlayAudioPlayer.pause()
+        }, stopPlayingPreviewAudio() {
+            let that = this
+            if (this.previewingTimer != null) {
+                clearInterval(that.previewingTimer);
+                that.previewingTimer = null;
+            }
+
+            this.$refs.previewAudioPlayer.pause();
         },
         hideText() { this.isHideText = true },
         showText() { this.isHideText = false },
@@ -179,22 +240,33 @@ export default {
                     break;
                 case "OBSERVER_STATUS_PLAYING":
                     console.log("OBSERVER Playing!!!")
+                    if(this.isPlaying==false){
+                        this.playChangeToPlayAudio()
+                    }
                     this.isPlaying = true
-                    this.playBeepAudio()
+                    this.playPlayingAudio()
                     break;
                 case "OBSERVER_STATUS_PLAYING_CLEAR":
                     console.log("OBSERVER Playing CLEAR!!!")
+                    if(this.isPlaying){
+                        this.playCompletedAudio()
+                    }
                     this.isPlaying = false
-                    this.playCompletedAudio()
+                    this.stopPlayingPlayingAudio()
                     break;
                 case "OBSERVER_STATUS_PREVIEW":
                     console.log("OBSERVER Preview !!!")
+                    if(this.isPreview ==false){
+                        this.playChangeToPreviewAudio()
+                    }
                     this.isPreview = true
-                    this.playMessengerAudio()
+                    this.playPreviewAudio()
                     break;
                 case "OBSERVER_STATUS_PREVIEW_CLEAR":
                     console.log("OBSERVER Preview CLEAR!!!")
+                    
                     this.isPreview = false
+                    this.stopPlayingPreviewAudio()
                     break;
             }
         }
