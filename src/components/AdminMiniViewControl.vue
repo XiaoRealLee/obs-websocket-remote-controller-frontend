@@ -42,6 +42,18 @@
                         @click="activateObsMiniView(name, obsObjectName)"></ScreenController>
                 </div>
             </div>
+            <div>
+                <p>测试浏览器源用的东西</p>
+                <div>
+                    <el-input v-model="browserSourceSuffixName" placeholder="浏览器源后缀"></el-input>
+                    <el-button @click="addBrowserSourceSuffixName">添加浏览器源</el-button>
+                </div>
+                <div v-for="(metadata,name) in browserSourceConfig">
+                <p>{{ name }}</p>
+                <el-button @click="testShowBrowserSource(name)" size="large" type="warning">测试显示一个浏览器源</el-button>
+                <el-button @click="testHideBrowserSource(name)" size="large" type="warning">测试隐藏一个浏览器源</el-button>
+                </div>
+            </div>
 
         </el-collapse-item>
     </el-collapse>
@@ -75,20 +87,12 @@ export default {
             viewName: null,
             obsSourceName: null,
             obsSourceUri: null,
+            browserSourceSuffixName:null,
             activeNames: ref(["1"]),
             OBSConfig: {
-                "aaa": {
-                    obsObjectName: "bbb",
-                    streamUri: "rtmp://xm1.dc.sunderer.games:1935/live/catsaysmeow"
-                },
-                "ccc": {
-                    obsObjectName: "ddd",
-                    streamUri: "ablyatman222"
-                },
-                "eee": {
-                    obsObjectName: "fff",
-                    streamUri: "ablyatman333"
-                },
+            },
+            browserSourceConfig:{
+
             },
             websocketInfo: {
                 ip: "127.0.0.1",
@@ -119,6 +123,17 @@ export default {
                     message: "添加成功",
                     type: "success"
                 });
+            }
+        },
+        addBrowserSourceSuffixName(){
+            if (this.browserSourceSuffixName == null) {
+                ElMessage({
+                    message: "参数不能为空",
+                    type: "warning"
+                });
+            } else{
+                this.browserSourceConfig[this.browserSourceSuffixName] = {};
+                this.browserSourceSuffixName = null;
             }
         },
         importViewConfig: function () {
@@ -281,7 +296,27 @@ export default {
             }
 
             return JSON.stringify(commandResult)
-        }
+        }, 
+        
+        testShowBrowserSource(name) {
+            let message = this.websocketInfo.sid + " 请求显示浏览器源"
+            let metadata = {
+                "name":name
+            }
+            let commandStr = this.buildCommand("BROWSER_SOURCE_SHOW", null, message, metadata)
+            console.log("commandStr: " + commandStr)
+            this.doSend(commandStr)
+        },
+        
+        testHideBrowserSource(name) {
+            let message = this.websocketInfo.sid + " 请求隐藏浏览器源"
+            let metadata = {
+                "name":name
+            }
+            let commandStr = this.buildCommand("BROWSER_SOURCE_HIDE", null, message, metadata)
+            console.log("commandStr: " + commandStr)
+            this.doSend(commandStr)
+        },
     }
 }
 </script>
